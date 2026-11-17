@@ -21,6 +21,20 @@ pipeline {
             }
         }
 
+
+        stage('Semgrep SAST Scan') {
+            steps {
+                sh '''
+                    docker run --rm \
+                    -v "$WORKSPACE:/src" \
+                    -w /src \
+                    semgrep/semgrep \
+                    semgrep scan --config auto --error .
+                '''
+            }
+        }
+
+
         stage('Repository Validation') {
             steps {
                 sh '''
