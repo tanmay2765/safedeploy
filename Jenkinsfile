@@ -10,6 +10,8 @@ pipeline {
 
     environment {
         PROJECT_NAME = 'safedeploy'
+        BACKEND_IMAGE = 'safedeploy-backend'
+        FRONTEND_IMAGE = 'safedeploy-frontend'
     }
 
     stages {
@@ -20,7 +22,6 @@ pipeline {
                 echo 'Source code checked out successfully.'
             }
         }
-
 
         stage('Semgrep SAST Scan') {
             steps {
@@ -34,54 +35,62 @@ pipeline {
             }
         }
 
+        stage('Backend Tests') {
+            steps {
+                dir('backend') {
+                    sh '''
+                        docker run --rm \
+                        -v "$WORKSPACE/backend:/app" \
+                        -w /app \
+                        python:3.12-slim \
+                        sh -c "pip install --no-cache-dir -r requirements.txt && pytest -q"
+                    '''
+                }
+            }
+        }
 
-        stage('Repository Validation') {
+        stage('Frontend Lint') {
+            steps {
+                dir('frontend') {
+                    sh 'npm ci && npm run lint'
+                }
+            }
+        }
+
+        stage('Frontend Build') {
+            steps {
+                dir('frontend') {
+                    sh 'npm run build'
+                }
+            }
+        }
+
+        stage('Backend Docker Build') {
             steps {
                 sh '''
-                    echo "Validating project structure..."
-
-                    test -d backend
-                    test -d frontend
-                    test -d docker
-                    test -d kubernetes
-                    test -d terraform
-                    test -d sample-app
-
-                    echo "Project structure verified."
+                    docker build \
+                    -t ${BACKEND_IMAGE}:${BUILD_NUMBER} \
+                    -t ${BACKEND_IMAGE}:latest \
+                    ./backend
                 '''
             }
         }
 
-        stage('Backend Validation') {
+        stage('Frontend Docker Build') {
             steps {
                 sh '''
-                    echo "Backend files:"
-                    ls -la backend
-                '''
-            }
-        }
-
-        stage('Frontend Validation') {
-            steps {
-                sh '''
-                    echo "Frontend files:"
-                    ls -la frontend
-                '''
-            }
-        }
-
-        stage('Docker Environment Check') {
-            steps {
-                sh '''
-                    docker --version
-                    docker info
+                    docker build \
+                    --build-arg NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1 \
+                    -t ${FRONTEND_IMAGE}:${BUILD_NUMBER} \
+                    -t ${FRONTEND_IMAGE}:latest \
+                    ./frontend
                 '''
             }
         }
 
         stage('Pipeline Summary') {
             steps {
-                echo 'SafeDeploy CI stages completed successfully.'
+                echo 'Backend tests, frontend lint/build and Docker image builds completed.'
             }
         }
     }
