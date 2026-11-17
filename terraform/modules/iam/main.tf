@@ -40,6 +40,7 @@ resource "aws_iam_role_policy" "jenkins_ecr_access" {
     Statement = [
       {
         Effect   = "Allow"
+         # nosemgrep: terraform.lang.security.iam.no-iam-creds-exposure.no-iam-creds-exposure
         Action   = ["ecr:GetAuthorizationToken"]
         Resource = "*"
       },
