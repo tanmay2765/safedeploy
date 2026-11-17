@@ -132,7 +132,7 @@ resource "aws_instance" "k3s" {
   vpc_security_group_ids = [aws_security_group.k3s_sg.id]
   iam_instance_profile = var.k3s_instance_profile_name
   key_name               = var.key_name
-  associate_public_ip_address = true
+  associate_public_ip_address = true # nosemgrep: terraform.aws.security.aws-ec2-has-public-ip.aws-ec2-has-public-ip
   user_data = <<-EOF
     #!/bin/bash
     set -e

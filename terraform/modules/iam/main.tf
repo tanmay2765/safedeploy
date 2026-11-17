@@ -101,6 +101,8 @@ resource "aws_iam_role_policy" "k3s_ecr_access" {
     Statement = [
       {
         Effect   = "Allow"
+        # Required for ECR Docker authentication; AWS requires Resource="*".
+        # nosemgrep: terraform.lang.security.iam.no-iam-creds-exposure
         Action   = ["ecr:GetAuthorizationToken"]
         Resource = "*"
       },
