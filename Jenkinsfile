@@ -94,7 +94,7 @@ pipeline {
             steps {
                 sh '''
                     docker build \
-                    --build-arg NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1 \
+                    --build-arg NEXT_PUBLIC_API_URL=/api/v1 \
                     -t ${FRONTEND_IMAGE}:${BUILD_NUMBER} \
                     -t ${FRONTEND_IMAGE}:latest \
                     ./frontend
