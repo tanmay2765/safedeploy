@@ -2,36 +2,87 @@
 pipeline {
     agent any
 
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    environment {
+        PROJECT_NAME = 'safedeploy'
+    }
+
     stages {
+
         stage('Checkout') {
             steps {
                 checkout scm
-                echo 'SafeDeploy source code checked out.'
+                echo 'Source code checked out successfully.'
             }
         }
 
-        stage('Verify Repository') {
+        stage('Repository Validation') {
             steps {
                 sh '''
-                    echo "Checking SafeDeploy structure..."
+                    echo "Validating project structure..."
+
                     test -d backend
                     test -d frontend
                     test -d docker
                     test -d kubernetes
                     test -d terraform
                     test -d sample-app
-                    echo "Repository structure verified."
+
+                    echo "Project structure verified."
                 '''
+            }
+        }
+
+        stage('Backend Validation') {
+            steps {
+                sh '''
+                    echo "Backend files:"
+                    ls -la backend
+                '''
+            }
+        }
+
+        stage('Frontend Validation') {
+            steps {
+                sh '''
+                    echo "Frontend files:"
+                    ls -la frontend
+                '''
+            }
+        }
+
+        stage('Docker Environment Check') {
+            steps {
+                sh '''
+                    docker --version
+                    docker info
+                '''
+            }
+        }
+
+        stage('Pipeline Summary') {
+            steps {
+                echo 'SafeDeploy CI stages completed successfully.'
             }
         }
     }
 
     post {
         success {
-            echo 'SafeDeploy pipeline completed successfully.'
+            echo 'SafeDeploy CI pipeline completed successfully.'
         }
+
         failure {
-            echo 'SafeDeploy pipeline failed.'
+            echo 'SafeDeploy CI pipeline failed. Check the failed stage.'
+        }
+
+        always {
+            echo 'Pipeline execution finished.'
         }
     }
 }
