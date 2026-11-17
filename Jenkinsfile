@@ -49,10 +49,17 @@ pipeline {
             }
         }
 
+        
         stage('Frontend Lint') {
             steps {
                 dir('frontend') {
-                    sh 'npm ci && npm run lint'
+                    sh '''
+                        docker run --rm \
+                        -v "$WORKSPACE/frontend:/app" \
+                        -w /app \
+                        node:20-alpine \
+                        sh -c "npm ci && npm run lint"
+                    '''
                 }
             }
         }
@@ -60,10 +67,17 @@ pipeline {
         stage('Frontend Build') {
             steps {
                 dir('frontend') {
-                    sh 'npm run build'
+                    sh '''
+                        docker run --rm \
+                        -v "$WORKSPACE/frontend:/app" \
+                        -w /app \
+                        node:20-alpine \
+                        sh -c "npm run build"
+                    '''
                 }
             }
         }
+
 
         stage('Backend Docker Build') {
             steps {
