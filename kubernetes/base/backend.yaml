@@ -46,6 +46,14 @@ spec:
               value: production
             - name: DEBUG
               value: "false"
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
           readinessProbe:
             httpGet:
               path: /api/v1/health
