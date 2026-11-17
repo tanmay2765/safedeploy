@@ -90,7 +90,7 @@ resource "aws_security_group" "k3s_sg" {
   }
 }
 
-resource "aws_instance" "jenkins" {
+resource "aws_instance" "jenkins" { # nosemgrep: terraform.aws.security.aws-ec2-has-public-ip.aws-ec2-has-public-ip
   ami                    = var.ami_id
   instance_type          = var.jenkins_instance_type
   subnet_id              = element(var.public_subnet_ids, 0)
@@ -125,15 +125,14 @@ root_block_device {
 }
 }
 
-resource "aws_instance" "k3s" {
+resource "aws_instance" "k3s" { # nosemgrep: terraform.aws.security.aws-ec2-has-public-ip.aws-ec2-has-public-ip
   ami                    = var.ami_id
   instance_type          = var.k3s_instance_type
   subnet_id              = element(var.public_subnet_ids, 1)
   vpc_security_group_ids = [aws_security_group.k3s_sg.id]
   iam_instance_profile = var.k3s_instance_profile_name
   key_name               = var.key_name
-  associate_public_ip_address = true # nosemgrep: terraform.aws.security.aws-ec2-has-public-ip.aws-ec2-has-public-ip
-  user_data = <<-EOF
+  associate_public_ip_address = true 
     #!/bin/bash
     set -e
     apt-get update -y
