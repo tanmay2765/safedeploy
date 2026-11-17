@@ -72,3 +72,5 @@ override.tf.json
 # Docker logs
 *.log
 
+!frontend/src/lib/
+!frontend/src/lib/**
