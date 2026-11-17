@@ -1,0 +1,75 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: safedeploy-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-safedeploy_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-safedeploy_password}
+      POSTGRES_DB: ${POSTGRES_DB:-safedeploy_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-safedeploy_user} -d ${POSTGRES_DB:-safedeploy_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - safedeploy-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: safedeploy-backend
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DEBUG=${DEBUG:-true}
+      - POSTGRES_SERVER=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-safedeploy_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-safedeploy_password}
+      - POSTGRES_DB=${POSTGRES_DB:-safedeploy_db}
+      - ASYNC_DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-safedeploy_user}:${POSTGRES_PASSWORD:-safedeploy_password}@postgres:5432/${POSTGRES_DB:-safedeploy_db}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-safedeploy_user}:${POSTGRES_PASSWORD:-safedeploy_password}@postgres:5432/${POSTGRES_DB:-safedeploy_db}
+      - JENKINS_URL=${JENKINS_URL:-http://localhost:8080}
+      - PROMETHEUS_URL=${PROMETHEUS_URL:-http://localhost:9090}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - safedeploy-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+    container_name: safedeploy-frontend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - safedeploy-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  safedeploy-network:
+    driver: bridge

@@ -1,0 +1,22 @@
+# Example Terraform variables for the dev environment
+# Never commit a file named terraform.tfvars with real secrets.
+
+# AWS region
+aws_region = "us-east-1"
+
+# General identifiers
+environment  = "dev"
+project_name = "safedeploy"
+
+# VPC configuration
+vpc_cidr = "10.0.0.0/16"
+availability_zones = ["us-east-1a", "us-east-1b"]
+
+# EC2 instance configuration
+jenkins_instance_type = "t3.medium"
+k3s_instance_type    = "t3.large"
+ami_id               = "ami-0c7217cdde317cfec"  # Ubuntu 22.04 LTS in us-east-1 (update as needed)
+key_name             = "my-ec2-key"           # Name of an existing EC2 key pair
+
+# Network access control (restrict in production)
+allowed_cidr_blocks = ["0.0.0.0/0"]
