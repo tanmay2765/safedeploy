@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
+
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.api.v1.router import api_router
@@ -15,7 +17,6 @@ app = FastAPI(
     redoc_url=f"{settings.API_V1_STR}/redoc",
 )
 
-# Set all CORS enabled origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,
@@ -26,6 +27,8 @@ app.add_middleware(
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
+Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+
 
 @app.get("/")
 async def root():
@@ -34,4 +37,3 @@ async def root():
         "docs": f"{settings.API_V1_STR}/docs",
         "health": f"{settings.API_V1_STR}/health",
     }
-
